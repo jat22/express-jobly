@@ -1,5 +1,5 @@
 const { BadRequestError } = require('../expressError');
-const { sqlForPartialUpdate } = require('./sql')
+const { sqlForPartialUpdate, sqlForFilter } = require('./sql')
 
 describe("Create sql for partial update", function () {
 	test("creates sql", function () {

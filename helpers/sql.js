@@ -1,3 +1,4 @@
+const { query } = require("express");
 const { BadRequestError } = require("../expressError");
 
 // THIS NEEDS SOME GREAT DOCUMENTATION.
@@ -25,4 +26,24 @@ function sqlForPartialUpdate(dataToUpdate, jsToSql) {
   };
 }
 
-module.exports = { sqlForPartialUpdate };
+function sqlForFilter(queryParams) {
+  if (queryParams.name) queryParams["name"] = `%${queryParams.name}%`
+  const keys = Object.keys(queryParams);
+  const conditions = keys.map((q, i) => {
+    if (q === "name"){
+      return `name ILIKE $${i + 1}`
+    }
+    if (q === "minEmployees"){
+      return `num_employees >= $${i + 1}`
+    }
+    if (q === "maxEmployees"){
+      return `num_employees <= $${i + 1}`
+    }
+  })
+  return {
+    condStatment : conditions.join(" AND "),
+    values : Object.values(queryParams)
+  }
+}
+
+module.exports = { sqlForPartialUpdate, sqlForFilter };
