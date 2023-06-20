@@ -2,6 +2,14 @@ const { BadRequestError } = require("../expressError");
 
 // THIS NEEDS SOME GREAT DOCUMENTATION.
 
+/** Returns an object with a string of SQL assigning new
+ * values to specified columns and a list of those values.
+ * 
+ * {
+ *  setCols : `"column_name = $1", ...`
+ *  values : [<new value>,...] 
+ * }
+ */
 function sqlForPartialUpdate(dataToUpdate, jsToSql) {
   const keys = Object.keys(dataToUpdate);
   if (keys.length === 0) throw new BadRequestError("No data");
