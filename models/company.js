@@ -90,14 +90,26 @@ class Company {
 
   static async get(handle) {
     const companyRes = await db.query(
-          `SELECT handle,
-                  name,
-                  description,
-                  num_employees AS "numEmployees",
-                  logo_url AS "logoUrl"
-           FROM companies
-           WHERE handle = $1`,
-        [handle]);
+          `SELECT 	
+              c.handle,
+              c.name,
+              c.description,
+              c.num_employees AS "numEmployees",
+              c.logo_url AS "logoUrl",
+              ARRAY_AGG(
+                jsonb_build_object(
+                  'id', j.id,
+                  'title', j.title,
+                  'salary', j.salary,
+                  'equity', j.equity
+                )
+              ) AS jobs
+          FROM companies AS c
+            JOIN jobs AS j ON c.handle = j.company_handle
+          WHERE handle = $1
+          GROUP BY
+            c.handle`,
+          [handle]);
 
     const company = companyRes.rows[0];
 
