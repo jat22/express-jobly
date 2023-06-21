@@ -83,7 +83,7 @@ class Company {
   /** Given a company handle, return data about company.
    *
    * Returns { handle, name, description, numEmployees, logoUrl, jobs }
-   *   where jobs is [{ id, title, salary, equity, companyHandle }, ...]
+   *   where jobs is [{ id, title, salary, equity}, ...]
    *
    * Throws NotFoundError if not found.
    **/
@@ -106,7 +106,7 @@ class Company {
               ) AS jobs
           FROM companies AS c
             JOIN jobs AS j ON c.handle = j.company_handle
-          WHERE handle = $1
+          WHERE c.handle = $1
           GROUP BY
             c.handle`,
           [handle]);

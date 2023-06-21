@@ -125,13 +125,20 @@ class User {
 
   static async get(username) {
     const userRes = await db.query(
-          `SELECT username,
-                  first_name AS "firstName",
-                  last_name AS "lastName",
-                  email,
-                  is_admin AS "isAdmin"
-           FROM users
-           WHERE username = $1`,
+          `SELECT
+              u.username,
+              u.first_name AS "firstName",
+              u.last_name AS "lastName",
+              u.email,
+              u.is_admin,
+              ARRAY_AGG(a.job_id) AS jobs
+          FROM users AS u
+            JOIN applications AS a
+            ON u.username = a.username
+          WHERE 
+            u.username = $1
+          GROUP BY
+            u.username`,
         [username],
     );
 
@@ -203,6 +210,29 @@ class User {
     const user = result.rows[0];
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
+  }
+
+  static async apply(username, jobId){
+    const checkJob = await db.query(
+      `SELECT id FROM jobs WHERE id=$1`, [jobId]);
+    if(checkJob.rows.length === 0) 
+      throw new BadRequestError("Job does not exist");
+
+    const checkUser = await db.query(
+      `SELECT username FROM users WHERE username=$1`, [username])
+    if(checkUser.rows.length === 0)
+      throw new BadRequestError("User does not exist");
+
+    const result = await db.query(
+      `INSERT INTO applications
+        (username, job_id)
+      VALUES
+        ($1, $2)
+      RETURNING
+        job_id`,
+      [username, jobId]
+    )
+    return result.rows[0].job_id
   }
 }
 
