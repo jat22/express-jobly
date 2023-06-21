@@ -24,7 +24,7 @@ router.post('/', ensureAdmin, async (req, res, next) => {
 			throw new BadRequestError(errs);
 		};
 		const result = await Job.create(req.body)
-		return res.json(result)
+		return res.status(201).json(result)
 	} catch(e) {
 		return next(e)
 	}
