@@ -53,8 +53,9 @@ router.post("/", ensureAdmin, async function (req, res, next) {
 
 router.get("/", async function (req, res, next) {
   const query = req.query
+  console.log(query)
   try {
-    if (query.length > 0){
+    if (Object.keys(query).length > 0){
       if(query.hasOwnProperty("minEmployees" )) 
         query["minEmployees"] = parseInt(query.minEmployees);
       if(query.hasOwnProperty("maxEmployees" )) 

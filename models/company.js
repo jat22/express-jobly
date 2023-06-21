@@ -2,7 +2,7 @@
 
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
-const { sqlForPartialUpdate, sqlForFilter } = require("../helpers/sql");
+const { sqlForPartialUpdate, sqlForCompFilter } = require("../helpers/sql");
 
 /** Related functions for companies. */
 
@@ -66,7 +66,7 @@ class Company {
    * returns [{handle, name, description, numEmployees, logoUrl}, ...]
   */
   static async filter(queryParams){
-    const { condStatment, values } = sqlForFilter(queryParams)
+    const { condStatment, values } = sqlForCompFilter(queryParams)
     const sqlQuery = 
         `SELECT handle, 
           name, 

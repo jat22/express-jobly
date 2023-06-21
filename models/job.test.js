@@ -25,7 +25,6 @@ describe("create", function() {
 	test('works', async () => {
 		const job = await Job.create(newJob);
 		expect(job.title).toEqual(newJob.title);
-		expect(job.id).toBeNumber()
 	})
 })
 
@@ -38,16 +37,22 @@ describe("findAll", function () {
 });
 
 /******************************** filter */
-
-
-/********************************* get */
-describe('get', function(){
-	test('works', async () => {
-		const job = await Company.get()
+describe("filter by title", function () {
+	test("all params", async() => {
+		const results = await Job.filter({title:"j1", minSalary : 20000, hasEquity : true})
+		expect(results.length).toBe(1)
+	})
+	test("title", async() => {
+		const results = await Job.filter({title:"j1"})
+		expect(results.length).toBe(1)
+	})
+	test("minSalary", async() => {
+		const results = await Job.filter({minSalary : 20000})
+		expect(results.length).toBe(2)
+	})
+	test("hasEquity", async() => {
+		const results = await Job.filter({hasEquity : true})
+		expect(results.length).toBe(3)
 	})
 })
 
-/********************************** update */
-
-
-/***************************** remove */

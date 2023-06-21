@@ -1,6 +1,6 @@
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
-const { sqlForPartialUpdate } = require('../helpers/sql')
+const { sqlForPartialUpdate, sqlForJobFilter } = require('../helpers/sql')
 
 class Job {
 	/** Create a job (from data), update db, return new job data.
@@ -40,6 +40,27 @@ class Job {
 		)
 		return results.rows
 	};
+
+	/**
+	 * filter jobs based on query params:
+	 * 			{ title, minSalary(integer), hasEquity(true/false)}
+	 * 
+	 * returns list of jobs fitting params:
+	 * 			[ { id, title, salary, equity, companyHandle }, ...]
+	 */
+
+	static async filter(query){
+		const { condStatement, values } = sqlForJobFilter(query)
+		console.log(condStatement)
+		console.log(values)
+		const sqlQuery = 
+			`SELECT id, title, salary, equity, company_handle
+			FROM jobs
+			WHERE ${condStatement}
+			ORDER BY title`
+		const jobRes = await db.query(sqlQuery, values)
+		return jobRes.rows
+	}
 
 	/** Find a specific job by ID
 	 * 
