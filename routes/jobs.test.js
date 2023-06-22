@@ -50,7 +50,7 @@ describe("POST /jobs", () => {
 	
 	  test("bad request with invalid data", async function () {
 		const resp = await request(app)
-			.post("/companies")
+			.post("/jobs")
 			.send({
 			  title : "testing",
 			  salary : "this is not an integer",
@@ -63,11 +63,33 @@ describe("POST /jobs", () => {
 })
 
 describe("GET /jobs", () => {
-	test("works", async () => {
-		const resp = await request(app).get('/jobs')
-		expect(resp.statusCode).toBe(200)
-	})
-
+	test("all jobs works", async () => {
+		const jobRes = await db.query(
+			`SELECT id, title, salary, equity, company_handle AS "companyHandle"
+			FROM jobs`
+		);
+		const jobs = jobRes.rows;
+		const resp = await request(app).get('/jobs');
+		expect(resp.statusCode).toBe(200);
+		expect(resp.body).toEqual(jobs);
+	});
+	test("query str works", async () => {
+		const jRes = await db.query(
+			`SELECT id, title, salary, equity, company_handle AS "companyHandle"
+			FROM jobs
+			WHERE title='J1'`
+		);
+		console.log(jRes);
+		const j1 = jRes.rows[0];
+		const resp = await request(app)
+			.get('/jobs?title=J1')
+		expect(resp.body).toEqual({jobs:[j1]})
+	});
+	test("error for invalid query", async () => {
+		const resp = await request(app)
+			.get("/jobs?happy=fail");
+		expect(resp.statusCode).toBe(400);
+	});
 })
 
 describe("GET /jobs/:id", () => {
@@ -79,11 +101,22 @@ describe("GET /jobs/:id", () => {
 	})
 	test("no job found", async() => {
 		const resp = await request(app).get(`/jobs/100000`)
-		expect(resp.statusCode).toBe(400)
+		expect(resp.statusCode).toBe(404)
 	})
 })
 
 describe("PATCH /jobs/:id", () => {
+	test("works for admin", async () => {
+		const idRes = await db.query(`SELECT id FROM jobs`)
+		const testId = idRes.rows[0].id
+		const resp = await request(app)
+			.patch(`/jobs/${testId}`)
+			.send({
+			  title: "j1-new",
+			})
+			.set("authorization", `Bearer ${u2Token}`);
+		expect(resp.statusCode).toBe(200);
+	})
 	test("unauthorized for users", async function () {
 		const idRes = await db.query(`SELECT id FROM jobs`)
 		const testId = idRes.rows[0].id
@@ -114,7 +147,7 @@ describe("PATCH /jobs/:id", () => {
 			title: "new nope",
 		})
 		.set("authorization", `Bearer ${u2Token}`);
-	expect(resp.statusCode).toEqual(400);
+	expect(resp.statusCode).toEqual(404);
 	});
 
 	test("bad request on handle change attempt", async function () {
@@ -135,5 +168,34 @@ describe("PATCH /jobs/:id", () => {
 		})
 		.set("authorization", `Bearer ${u2Token}`);
 	expect(resp.statusCode).toEqual(400);
+	});
+})
+
+describe("DELETE /jobs/:id", function(){
+	test("works for admin", async () => {
+		const jobRes = await db.query(`SELECT id, title FROM jobs`)
+		const job = jobRes.rows[0]
+		const resp = await request(app)
+			.delete(`/jobs/${job.id}`)
+			.set("authorization", `Bearer ${u2Token}`);
+		expect(resp.statusCode).toBe(200);
+		expect(resp.body)
+			.toEqual({ deleted: { id:job.id, title: job.title } });
+	})
+	test("unauthorized for users", async function () {
+		const idRes = await db.query(`SELECT id FROM jobs`)
+		const testId = idRes.rows[0].id
+		const resp = await request(app)
+			.delete(`/jobs/${testId}`)
+			.set("authorization", `Bearer ${u1Token}`);
+		expect(resp.statusCode).toBe(401);
+	});
+
+	test("unauth for anon", async function () {
+	const idRes = await db.query(`SELECT id FROM jobs`)
+	const testId = idRes.rows[0].id
+	const resp = await request(app)
+		.delete(`/jobs/${testId}`)
+	expect(resp.statusCode).toBe(401);
 	});
 })

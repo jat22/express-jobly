@@ -54,7 +54,7 @@ class Job {
 	static async filter(query){
 		const { condStatement, values } = sqlForJobFilter(query)
 		const sqlQuery = 
-			`SELECT id, title, salary, equity, company_handle
+			`SELECT id, title, salary, equity, company_handle AS "companyHandle"
 			FROM jobs
 			WHERE ${condStatement}
 			ORDER BY title`;

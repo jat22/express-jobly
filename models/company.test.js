@@ -99,7 +99,6 @@ describe("get", function () {
                 salary : j.salary, 
                 equity : parseFloat(j.equity) }
     });
-    console.log(jobRes)
     let company = await Company.get("c1");
     expect(company).toEqual({
       handle: "c1",

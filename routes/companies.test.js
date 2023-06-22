@@ -13,6 +13,7 @@ const {
   u1Token,
   u2Token
 } = require("./_testCommon");
+const { BadRequestError } = require("../expressError");
 
 beforeAll(commonBeforeAll);
 beforeEach(commonBeforeEach);
@@ -143,6 +144,14 @@ describe("GET /companies", function () {
     });
   });
 
+  test("error if invalid query", async () => {
+    try{
+      const resp = await request(app).get("/companies?no=df")
+    } catch(e){
+      expect(e instanceof BadRequestError).toBeTruthy;
+    }
+  })
+
   test("fails: test next() handler", async function () {
     // there's no normal failure event which will cause this route to fail ---
     // thus making it hard to test that the error-handler works with it. This
@@ -209,6 +218,14 @@ describe("GET /companies/:handle", function () {
 /************************************** PATCH /companies/:handle */
 
 describe("PATCH /companies/:handle", function () {
+  test('works for admin', async function() {
+    const resp = await request(app)
+        .patch(`/companies/c1`)
+        .send({
+          name: "C1-new"
+        })
+        .set("authorization", `Bearer ${u2Token}`);
+  })
   test("unauthorized for users", async function () {
     const resp = await request(app)
         .patch(`/companies/c1`)
@@ -267,6 +284,12 @@ describe("PATCH /companies/:handle", function () {
 /************************************** DELETE /companies/:handle */
 
 describe("DELETE /companies/:handle", function () {
+  test("works for admin", async function () {
+    const resp = await request(app)
+        .delete(`/companies/c1`)
+        .set("authorization", `Bearer ${u2Token}`);
+  });
+  
   test("unauthorized for users", async function () {
     const resp = await request(app)
         .delete(`/companies/c1`)

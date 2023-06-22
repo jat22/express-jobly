@@ -20,9 +20,9 @@ const router = new express.Router();
  *
  * company should be { handle, name, description, numEmployees, logoUrl }
  *
- * Returns { handle, name, description, numEmployees, logoUrl }
+ * Return company { handle, name, description, numEmployees, logoUrl }
  *
- * Authorization required: login
+ * Authorization required: admin
  */
 
 router.post("/", ensureAdmin, async function (req, res, next) {
@@ -40,14 +40,16 @@ router.post("/", ensureAdmin, async function (req, res, next) {
   }
 });
 
-/** GET /  =>
- *   { companies: [ { handle, name, description, numEmployees, logoUrl }, ...] }
- *
- * Can filter on provided search filters:
- * - minEmployees
- * - maxEmployees
- * - name (will find case-insensitive, partial matches)
- *
+/** GET / [optional: ? minEmployees & maxEmployees & name] 
+ *    => { companies }
+ *   
+ *  companies is 
+ *    [{ handle, name, description, numEmployees, logoUrl },...]
+ * 
+ *  minEmployees: integer
+ *  maxEmployees: integer
+ *  name: string
+ * 
  * Authorization required: none
  */
 
@@ -59,14 +61,15 @@ router.get("/", async function (req, res, next) {
         query["minEmployees"] = parseInt(query.minEmployees);
       if(query.hasOwnProperty("maxEmployees" )) 
         query["maxEmployees"] = parseInt(query.maxEmployees);
-      const validator = jsonschema.validate(query, companyFilterSchema)
+      const validator = jsonschema.validate(query, companyFilterSchema);
       if (!validator.valid) {
         const errs = validator.errors.map(e => e.stack);
         throw new BadRequestError(errs);
-      }
-      const companies = await Company.filter(req.query)
-      return res.json({ companies })
-    }
+      };
+      const companies = await Company.filter(req.query);
+      return res.json({ companies });
+    };
+
     const companies = await Company.findAll();
     return res.json({ companies });
   } catch (err) {
@@ -76,8 +79,16 @@ router.get("/", async function (req, res, next) {
 
 /** GET /[handle]  =>  { company }
  *
- *  Company is { handle, name, description, numEmployees, logoUrl, jobs }
- *   where jobs is [{ id, title, salary, equity }, ...]
+ *  Company is
+ *    {  
+ *      handle, 
+ *      name, 
+ *      description, 
+ *      numEmployees, 
+ *      logoUrl, 
+ *      jobs : 
+ *        [{ id, title, salary, equity }, ...] 
+ *    }
  *
  * Authorization required: none
  */
@@ -99,7 +110,7 @@ router.get("/:handle", async function (req, res, next) {
  *
  * Returns { handle, name, description, numEmployees, logo_url }
  *
- * Authorization required: login
+ * Authorization required: admin
  */
 
 router.patch("/:handle", ensureAdmin, async function (req, res, next) {
@@ -119,7 +130,7 @@ router.patch("/:handle", ensureAdmin, async function (req, res, next) {
 
 /** DELETE /[handle]  =>  { deleted: handle }
  *
- * Authorization: login
+ * Authorization required: admin
  */
 
 router.delete("/:handle", ensureAdmin, async function (req, res, next) {

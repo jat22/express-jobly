@@ -12,10 +12,12 @@ const jobFilterSchema = require('../schemas/jobFilter.json')
 const { BadRequestError } = require('../expressError');
 
 /**
- * POST / Admins can create a new job, otherwise unauthorized.
- * Data {title, salary, equity, companyHandle}
+ * POST / { job } => { job }
+ * job in should be {title, salary, equity, companyHandle}
  * 
- * Return {id, title, salary, equity, companyHandle}
+ * Return job {id, title, salary, equity, companyHandle}
+ * 
+ * Authorization required: admin
  */
 router.post('/', ensureAdmin, async (req, res, next) => {
 	try {
@@ -32,9 +34,13 @@ router.post('/', ensureAdmin, async (req, res, next) => {
 })
 
 /**
- * GET / Get all jobs or list of jobs based on search critera:
- * {title, minSalary, hasEquity}
- * returns [{id, title, salary, equity, companyHandle}]
+ * GET / [optional: ? title & minSalary & hasEquity]
+ * 		=> [{ job }, ...]
+ * 
+ * job is
+ * 		{id, title, salary, equity, companyHandle}
+ * 
+ * Authorization required: none
  */
 router.get('/', async (req, res, next) => {
 	const query = req.query;
@@ -61,8 +67,12 @@ router.get('/', async (req, res, next) => {
 })
 
 /**
- * GET / get a job
- * :id => {id, title, salary, equity, companyHandle}
+ * GET / [id] => { job }
+ * 
+ * Job is
+ * 		{id, title, salary, equity, companyHandle}
+ * 
+ * Authorization required: none
  */
 router.get('/:id', async(req, res, next) => {
 	try {
@@ -74,9 +84,12 @@ router.get('/:id', async(req, res, next) => {
 })
 
 /**
- * PATCH / update an exisiting job.
- * Admins only
+ * PATCH / [id] => { job }
  * 
+ * job is
+ * 		{id, title, salary, equity, companyHandle}
+ * 
+ * Authorization required: admin
  */
 router.patch('/:id', ensureAdmin, async (req, res, next) => {
 	try{
@@ -92,8 +105,12 @@ router.patch('/:id', ensureAdmin, async (req, res, next) => {
 	}
 })
 
-/** DELETE / removes an existing job.
- * admins only
+/** DELETE / [id] => { deleted: { job } }
+ * 
+ * job is
+ * 		{id, title}
+ * 
+ *  Authorization required: admin
  */
 router.delete('/:id', ensureAdmin, async (req, res, next) => {
 	try{
