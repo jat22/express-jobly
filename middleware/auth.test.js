@@ -4,9 +4,8 @@ const jwt = require("jsonwebtoken");
 const { UnauthorizedError } = require("../expressError");
 const {
   authenticateJWT,
-  ensureLoggedIn,
   ensureAdmin,
-  ensureCorrectUser,
+  ensureAuthorized,
 } = require("./auth");
 
 
@@ -58,29 +57,6 @@ describe("authenticateJWT", function () {
   });
 });
 
-
-describe("ensureLoggedIn", function () {
-  test("works", function () {
-    expect.assertions(1);
-    const req = {};
-    const res = { locals: { user: { username: "test", isAdmin: false } } };
-    const next = function (err) {
-      expect(err).toBeFalsy();
-    };
-    ensureLoggedIn(req, res, next);
-  });
-
-  test("unauth if no login", function () {
-    expect.assertions(1);
-    const req = {};
-    const res = { locals: {} };
-    const next = function (err) {
-      expect(err instanceof UnauthorizedError).toBeTruthy();
-    };
-    ensureLoggedIn(req, res, next);
-  });
-});
-
 describe("ensureAdmin", function () {
   test("works", function () {
     expect.assertions(1);
@@ -111,7 +87,7 @@ describe("ensureAdmin", function () {
   })
 })
 
-describe("ensureCorrectUser", function() {
+describe("ensureAuthorized", function() {
   test("works with mataching user", function(){
     expect.assertions(1);
     const req = { params : { username: "test" } };
@@ -119,7 +95,7 @@ describe("ensureCorrectUser", function() {
     const next = function (e) {
       expect(e).toBeFalsy();
     };
-    ensureCorrectUser(req, res, next)
+    ensureAuthorized(req, res, next)
   });
   test("works with admin", function(){
     expect.assertions(1);
@@ -128,7 +104,7 @@ describe("ensureCorrectUser", function() {
     const next = function (e) {
       expect(e).toBeFalsy();
     };
-    ensureCorrectUser(req, res, next)
+    ensureAuthorized(req, res, next)
   });
   test("unauth if no login", function(){
     expect.assertions(1);
@@ -137,7 +113,7 @@ describe("ensureCorrectUser", function() {
     const next = function (err) {
       expect(err instanceof UnauthorizedError).toBeTruthy();
     };
-    ensureCorrectUser(req, res, next)
+    ensureAuthorized(req, res, next)
   });
   test("unauth if user does not match", function(){
     expect.assertions(1);
@@ -146,6 +122,30 @@ describe("ensureCorrectUser", function() {
     const next = function (err) {
       expect(err instanceof UnauthorizedError).toBeTruthy();
     };
-    ensureCorrectUser(req, res, next)
+    ensureAuthorized(req, res, next)
   });
 })
+
+
+
+// describe("ensureLoggedIn", function () {
+//   test("works", function () {
+//     expect.assertions(1);
+//     const req = {};
+//     const res = { locals: { user: { username: "test", isAdmin: false } } };
+//     const next = function (err) {
+//       expect(err).toBeFalsy();
+//     };
+//     ensureLoggedIn(req, res, next);
+//   });
+
+//   test("unauth if no login", function () {
+//     expect.assertions(1);
+//     const req = {};
+//     const res = { locals: {} };
+//     const next = function (err) {
+//       expect(err instanceof UnauthorizedError).toBeTruthy();
+//     };
+//     ensureLoggedIn(req, res, next);
+//   });
+// });

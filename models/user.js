@@ -211,7 +211,14 @@ class User {
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
   }
-
+  /**
+   * Allows user to apply for a job.
+   * accepts username and a jobId
+   * 
+   * adds to applications table in db
+   * 
+   * returns job_id with type number
+   */
   static async apply(username, jobId){
     const checkJob = await db.query(
       `SELECT id FROM jobs WHERE id=$1`, [jobId]);

@@ -31,13 +31,13 @@ class Company {
            (handle, name, description, num_employees, logo_url)
            VALUES ($1, $2, $3, $4, $5)
            RETURNING handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl"`,
-        [
-          handle,
-          name,
-          description,
-          numEmployees,
-          logoUrl,
-        ],
+          [
+            handle,
+            name,
+            description,
+            numEmployees,
+            logoUrl,
+          ]
     );
     const company = result.rows[0];
 
@@ -62,28 +62,45 @@ class Company {
   }
 
   /** Filter Companies 
-   * At least one query paramater: { name, minEmployees, maxEmployees }
+   * Returns a list of company objects meeting query params.
+   * Query param options: 
+   * 
+   *        { name, minEmployees, maxEmployees }
+   * 
+   * May use 1 to 3 params.
+   * 
    * returns [{handle, name, description, numEmployees, logoUrl}, ...]
   */
   static async filter(queryParams){
     const { condStatment, values } = sqlForCompFilter(queryParams)
     const sqlQuery = 
         `SELECT handle, 
-          name, 
-          description, 
-          num_employees AS "numEmployees", 
-          logo_url AS "logoUrl"
-          FROM companies
-          WHERE ${condStatment}
-          ORDER BY name`
+                name, 
+                description, 
+                num_employees AS "numEmployees", 
+                logo_url AS "logoUrl"
+        FROM companies
+        WHERE ${condStatment}
+        ORDER BY name`
     const companiesRes = await db.query(sqlQuery, values)
+
+    if(companiesRes.rows.length === 0) 
+      throw new NotFoundError("No companies match query parameters")
+
     return companiesRes.rows;
   }
 
   /** Given a company handle, return data about company.
    *
-   * Returns { handle, name, description, numEmployees, logoUrl, jobs }
-   *   where jobs is [{ id, title, salary, equity}, ...]
+   * Returns 
+   *    { 
+   *      handle, 
+   *      name, 
+   *      description,
+   *      numEmployees, 
+   *      logoUrl, 
+   *      jobs : [{ id, title, salary, equity}, ...]
+   *     }
    *
    * Throws NotFoundError if not found.
    **/
@@ -106,7 +123,8 @@ class Company {
                     'salary', j.salary,
                     'equity', j.equity
                   )
-                ) END AS jobs
+                )
+              END AS jobs
           FROM companies AS c
             LEFT JOIN jobs AS j ON c.handle = j.company_handle
           WHERE c.handle = $1

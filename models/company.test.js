@@ -218,7 +218,7 @@ describe("remove", function () {
 });
 
 /*********************************** filter */
-describe("filter by name", function () {
+describe("filter", function () {
   test("filter low specifcity", async () => {
     const results = await Company.filter({name : "C"});
     expect(results).toStrictEqual(
@@ -266,9 +266,6 @@ describe("filter by name", function () {
     const lowerResults = await Company.filter({name:"c"})
     expect(upperResults).toStrictEqual(lowerResults)
   })
-});
-
-describe("filter by min and max employees", function() {
   test("filter by minEmployees only", async () => {
     const results = await Company.filter({minEmployees : 2});
     expect(results).toStrictEqual([
@@ -333,9 +330,6 @@ describe("filter by min and max employees", function() {
       expect(e instanceof BadRequestError).toBeTruthy
     }
   });
-});
-
-describe("filter by all valid parameters", function() {
   test("filter by all valid parameters", async () => {
     const results = await Company.filter({name:"c", minEmployees : 1, maxEmployees : 2})
     expect(results).toStrictEqual([
@@ -355,4 +349,11 @@ describe("filter by all valid parameters", function() {
       }
     ])
   });
-})
+  test("no matching companies", async () => {
+    try {
+      const results = await Company.filter({minEmployees : 2000, maxEmployees : 100000});
+    } catch(e){
+      expect(e instanceof NotFoundError).toBeTruthy
+    }
+  })
+});

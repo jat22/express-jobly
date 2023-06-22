@@ -6,6 +6,8 @@ class Job {
 	/** Create a job (from data), update db, return new job data.
 	 * 
 	 * data should be { title, salary, equity, companyHandle }
+	 * 
+	 * return { id, title, salary, equity, companyHandle}
 	 */
 	static async create({ title, salary, equity, companyHandle }){
 		const checkCompany = await db.query(
@@ -51,20 +53,22 @@ class Job {
 
 	static async filter(query){
 		const { condStatement, values } = sqlForJobFilter(query)
-		console.log(condStatement)
-		console.log(values)
 		const sqlQuery = 
 			`SELECT id, title, salary, equity, company_handle
 			FROM jobs
 			WHERE ${condStatement}
-			ORDER BY title`
-		const jobRes = await db.query(sqlQuery, values)
+			ORDER BY title`;
+		const jobRes = await db.query(sqlQuery, values);
+		if(jobRes.rows === 0) 
+			throw new NotFoundError("No jobs found with query params");
 		return jobRes.rows
 	}
 
 	/** Find a specific job by ID
 	 * 
-	 * id => {id, title, salary, equity, companyHanlde}
+	 * returns {id, title, salary, equity, companyHanlde}
+	 * 
+	 * BadRequestError if a job with provided id doesn't exist
 	 */
 	static async get(id) {
 		const result = await db.query(
@@ -78,12 +82,19 @@ class Job {
 			[id]
 		);
 		if (result.rows.length === 0) 
-			throw new BadRequestError(`Job with id of ${id} does not exist`);
+			throw new NotFoundError(`Job with id ${id} not found`);
 		return result.rows[0]
 	};
 
 	/**Update a job
-	 * id => {id, title, salary, equity, companyHanlde}
+	 * Title, salary and equity can be updated. Pass job id and only data 
+	 * being updated.
+	 * 
+	 * {id, <title, salary, equity>} => 
+	 * 
+	 * 	returns {id, title, salary, equity, companyHanlde}
+	 * 
+	 * BadRequestError if a job with provided id doesn't exist
 	 */
 	static async update(id, data) {
 		const { setCols, values } = sqlForPartialUpdate(data,{});
@@ -97,12 +108,14 @@ class Job {
 
 		const result = await db.query(sql, [...values, id]);
 		if (result.rows.length === 0) 
-			throw new BadRequestError(`Job with id of ${id} does not exist`);
+			throw new NotFoundError(`Job with id ${id} not found`);
 		return result.rows[0]
 	};
 
 	/**delete a job
 	 * id => {id, title}
+	 * 
+	 * NotFoundError if job doesn't exist
 	 */
 	static async remove(id) {
 		const result = await db.query(

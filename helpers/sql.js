@@ -27,12 +27,23 @@ function sqlForPartialUpdate(dataToUpdate, jsToSql) {
 }
 
 /**
- * Returns an object with conditional statements and values to be 
- * used in an sql query when filtering companies
+ * Returns an object with custom conditional statement to filter companies 
+ * based on any combination of name, minEmployees, maxEmployees as query params 
+ * and a list of the query param values.
+ * 
+ * {
+ *    condStatement : `%name% ILIKE $1 AND num_employees >= $2 AND num_employees <= $3`,
+ *    values : [name, minEpmloyees, maxEmployees]
+ * }
+ * 
  */
 function sqlForCompFilter(queryParams) {
-  if (queryParams.name) queryParams["name"] = `%${queryParams.name}%`
   const keys = Object.keys(queryParams);
+  
+  if(keys.length === 0) throw new BadRequestError("No data");
+
+  if (queryParams.name) queryParams["name"] = `%${queryParams.name}%`;
+  
   const conditions = keys.map((q, i) => {
     if (q === "name"){
       return `name ILIKE $${i + 1}`
@@ -51,18 +62,19 @@ function sqlForCompFilter(queryParams) {
 }
 
 /**
- * Returns an object with conditional statements and values to be 
- * used in an sql query when filtering jobs
+ * Returns an object with custom conditional statement to filter jobs 
+ * based on any combination of title, minSalary, hasEquity query params 
+ * and a list of the query param values.
  * 
- * {title : "engineer", minSalary : 100000, hasEquity : true} =>
- *    {
- *       condSatement : 'title ILIKE $1 AND salary >= $2 AND equity > 0',
- *       values: ["engineer", 100000]
- *    }
+ *  {
+ *    condSatement : 'title ILIKE $1 AND salary >= $2 AND equity > 0',
+ *    values: ["%engineer%", 100000]
+ *  }
  */
 function sqlForJobFilter(queryParams) {
-  if (queryParams.title) queryParams["title"] = `%${queryParams.title}%`;
   const keys = Object.keys(queryParams);
+  if(keys.length === 0) throw new BadRequestError("No data");
+  if (queryParams.title) queryParams["title"] = `%${queryParams.title}%`;
   const values = Object.values(queryParams)
   const conditions = keys.map((q, i) => {
     if (q === "title"){
@@ -78,11 +90,10 @@ function sqlForJobFilter(queryParams) {
       }
     }
   })
-  const sql = {
+  return {
     condStatement : conditions.join(" AND "),
     values : values
   }
-  return sql
 }
 
 module.exports = { 

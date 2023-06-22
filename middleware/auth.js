@@ -14,7 +14,6 @@ const { UnauthorizedError } = require("../expressError");
  *
  * It's not an error if no token was provided or if the token is not valid.
  */
-//////////////????????res.locals.user vs. req.user ?????????????????/
 
 function authenticateJWT(req, res, next) {
   try {
@@ -29,21 +28,7 @@ function authenticateJWT(req, res, next) {
   }
 }
 
-/** Middleware to use when they must be logged in.
- *
- * If not, raises Unauthorized.
- */
-
-function ensureLoggedIn(req, res, next) {
-  try {
-    if (!res.locals.user) throw new UnauthorizedError();
-    return next();
-  } catch (err) {
-    return next(err);
-  }
-}
-
-/** Middleware to use when user must be an admin.
+/** Middleware: check that an admin is logged in.
  * 
  * raises Unauthorized if no user login or if user not admin
  */
@@ -57,13 +42,14 @@ function ensureAdmin(req, res, next) {
   }
 }
 
-/** Middleware to use when only user or admin can access user data.
+/** Middleware: check that logged in user matches user info request
+ *      -- or that the logged in user is an admin.
  * 
  * raises Unauthorized if no user login, if user not admin, or 
  * attempting to access user data that is not their own.
  */
 
-function ensureCorrectUser(req, res, next) {
+function ensureAuthorized(req, res, next) {
   try{
     if (!res.locals.user) throw new UnauthorizedError();
     if (res.locals.user.isAdmin) return next();
@@ -76,7 +62,20 @@ function ensureCorrectUser(req, res, next) {
 
 module.exports = {
   authenticateJWT,
-  ensureLoggedIn,
   ensureAdmin,
-  ensureCorrectUser
+  ensureAuthorized
 };
+
+// /** Middleware: Check that a user is logged in.
+//  *
+//  * If not, raises Unauthorized.
+//  */
+
+// function ensureLoggedIn(req, res, next) {
+//   try {
+//     if (!res.locals.user) throw new UnauthorizedError();
+//     return next();
+//   } catch (err) {
+//     return next(err);
+//   }
+// }

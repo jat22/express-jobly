@@ -257,3 +257,32 @@ describe("remove", function () {
     }
   });
 });
+
+describe("apply", function(){
+  test("works", async()=>{
+    const jobRes = await db.query(
+      `SELECT id FROM jobs WHERE title='J1'`
+    )
+    const jobId = jobRes.rows[0].id
+    const result = await User.apply("u1", jobId)
+    expect(result).toBe(jobId)
+  });
+  test("job does not exit", async()=>{
+    try{
+      const result = await User.apply("u1", 10000)
+    } catch(e){
+      expect(e instanceof BadRequestError).toBeTruthy
+    }
+  });
+  test("user does not exit", async()=>{
+    try{
+      const jobRes = await db.query(
+        `SELECT id FROM jobs WHERE title='J1'`
+      )
+      const jobId = jobRes.rows[0].id
+      const result = await User.apply("dne", jobId)
+    } catch(e){
+      expect(e instanceof BadRequestError).toBeTruthy
+    }
+  })
+})
