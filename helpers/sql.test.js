@@ -1,5 +1,5 @@
 const { BadRequestError } = require('../expressError');
-const { sqlForPartialUpdate, sqlForFilter } = require('./sql')
+const { sqlForPartialUpdate, sqlForFilter, sqlForCompFilter } = require('./sql')
 
 describe("Create sql for partial update", function () {
 	test("creates sql", function () {
@@ -43,3 +43,28 @@ describe("Create sql for partial update", function () {
 		});
 	})
 });
+
+describe("Create sql for company filter", function(){
+	test("creates sql", function () {
+		const queryParams = {
+			"name" : "new name",
+			"minEmployees" : 100,
+			"maxEmployees" : 200
+		};
+		const result = sqlForCompFilter(queryParams)
+	
+		expect(result).toStrictEqual({
+			condStatment :`name ILIKE $1 AND num_employees >= $2 AND num_employees <= $3`,
+			values : ["%new name%", 100, 200]
+		});
+	})
+	test("no data", function() {
+		const queryParams = {}
+
+		try{
+			sqlForCompFilter(queryParams)
+		} catch(e){
+			expect(e instanceof BadRequestError).toBeTruthy();
+		}
+	})
+})

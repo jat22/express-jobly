@@ -96,16 +96,19 @@ class Company {
               c.description,
               c.num_employees AS "numEmployees",
               c.logo_url AS "logoUrl",
-              ARRAY_AGG(
-                jsonb_build_object(
-                  'id', j.id,
-                  'title', j.title,
-                  'salary', j.salary,
-                  'equity', j.equity
-                )
-              ) AS jobs
+              CASE
+                WHEN COUNT(j.id) = 0 THEN ARRAY[NULL]::jsonb[]
+                ELSE
+                ARRAY_AGG(
+                  jsonb_build_object(
+                    'id', j.id,
+                    'title', j.title,
+                    'salary', j.salary,
+                    'equity', j.equity
+                  )
+                ) END AS jobs
           FROM companies AS c
-            JOIN jobs AS j ON c.handle = j.company_handle
+            LEFT JOIN jobs AS j ON c.handle = j.company_handle
           WHERE c.handle = $1
           GROUP BY
             c.handle`,

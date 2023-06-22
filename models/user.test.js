@@ -133,15 +133,44 @@ describe("findAll", function () {
 
 describe("get", function () {
   test("works", async function () {
+    const j1Id = await db.query(`SELECT id FROM jobs WHERE title = 'J1'`);
+    const j2Id = await db.query(`SELECT id FROM jobs WHERE title = 'J2'`);
+
+    await db.query(`
+          INSERT INTO applications
+            (username, job_id)
+          VALUES  ('u1', ${j1Id.rows[0].id}),
+                  ('u1', ${j2Id.rows[0].id})`);
+
     let user = await User.get("u1");
+
     expect(user).toEqual({
       username: "u1",
       firstName: "U1F",
       lastName: "U1L",
       email: "u1@email.com",
-      isAdmin: false,
+      is_admin: false,
+      jobs: [
+        j1Id.rows[0].id,
+        j2Id.rows[0].id
+      ]
     });
   });
+
+  test("user with no jobs", async function() {
+    let user = await User.get('u2');
+
+    expect(user).toEqual({
+      username: "u2",
+      firstName: "U2F",
+      lastName: "U2L",
+      email: "u2@email.com",
+      is_admin: false,
+      jobs: [
+        null
+      ]
+    })
+  })
 
   test("not found if no such user", async function () {
     try {

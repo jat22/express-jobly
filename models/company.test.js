@@ -29,7 +29,7 @@ describe("create", function () {
   test("works", async function () {
     let company = await Company.create(newCompany);
     expect(company).toEqual(newCompany);
-
+   
     const result = await db.query(
           `SELECT handle, name, description, num_employees, logo_url
            FROM companies
@@ -40,7 +40,7 @@ describe("create", function () {
         name: "New",
         description: "New Description",
         num_employees: 1,
-        logo_url: "http://new.img",
+        logo_url: "http://new.img"
       },
     ]);
   });
@@ -91,6 +91,15 @@ describe("findAll", function () {
 
 describe("get", function () {
   test("works", async function () {
+    const jobRes = await db.query(
+      `SELECT id, title, salary, equity FROM jobs WHERE company_handle = 'c1'`); 
+    const jobs = jobRes.rows.map((j) => {
+      return  { id : j.id, 
+                title : j.title,
+                salary : j.salary, 
+                equity : parseFloat(j.equity) }
+    });
+    console.log(jobRes)
     let company = await Company.get("c1");
     expect(company).toEqual({
       handle: "c1",
@@ -98,6 +107,7 @@ describe("get", function () {
       description: "Desc1",
       numEmployees: 1,
       logoUrl: "http://c1.img",
+      jobs: jobs
     });
   });
 

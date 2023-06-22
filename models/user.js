@@ -133,13 +133,13 @@ class User {
               u.is_admin,
               ARRAY_AGG(a.job_id) AS jobs
           FROM users AS u
-            JOIN applications AS a
+            LEFT JOIN applications AS a
             ON u.username = a.username
           WHERE 
             u.username = $1
           GROUP BY
             u.username`,
-        [username],
+        [username]
     );
 
     const user = userRes.rows[0];

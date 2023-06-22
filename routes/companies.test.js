@@ -111,6 +111,38 @@ describe("GET /companies", function () {
     });
   });
 
+  test("filters by employee number", async function () {
+    const resp = await request(app).get("/companies?minEmployees=2&maxEmployees=2");
+    expect(resp.body).toEqual({
+      companies:
+          [
+            {
+              handle: "c2",
+              name: "C2",
+              description: "Desc2",
+              numEmployees: 2,
+              logoUrl: "http://c2.img",
+            }
+          ],
+    });
+  });
+
+  test("filters by name", async function () {
+    const resp = await request(app).get("/companies?name=3");
+    expect(resp.body).toEqual({
+      companies:
+          [
+            {
+              handle: "c3",
+              name: "C3",
+              description: "Desc3",
+              numEmployees: 3,
+              logoUrl: "http://c3.img",
+            }
+          ],
+    });
+  });
+
   test("fails: test next() handler", async function () {
     // there's no normal failure event which will cause this route to fail ---
     // thus making it hard to test that the error-handler works with it. This
@@ -127,6 +159,7 @@ describe("GET /companies", function () {
 
 describe("GET /companies/:handle", function () {
   test("works for anon", async function () {
+    const jobIds = await db.query(`SELECT id FROM jobs WHERE company_handle = 'c1'`)
     const resp = await request(app).get(`/companies/c1`);
     expect(resp.body).toEqual({
       company: {
@@ -135,23 +168,38 @@ describe("GET /companies/:handle", function () {
         description: "Desc1",
         numEmployees: 1,
         logoUrl: "http://c1.img",
+        jobs : [
+          {
+            id : jobIds.rows[0].id,
+            title : "J1",
+            salary : 50000,
+            equity : 0.05
+          },
+          {
+            id : jobIds.rows[1].id,
+            title : "J2",
+            salary : 50000,
+            equity : 0.05
+          }
+        ]
       },
     });
   });
 
   test("works for anon: company w/o jobs", async function () {
-    const resp = await request(app).get(`/companies/c2`);
+    const resp = await request(app).get(`/companies/c3`);
     expect(resp.body).toEqual({
       company: {
-        handle: "c2",
-        name: "C2",
-        description: "Desc2",
-        numEmployees: 2,
-        logoUrl: "http://c2.img",
+        handle: "c3",
+        name: "C3",
+        description: "Desc3",
+        numEmployees: 3,
+        logoUrl: "http://c3.img",
+        jobs: [null]
       },
     });
   });
-
+  
   test("not found for no such company", async function () {
     const resp = await request(app).get(`/companies/nope`);
     expect(resp.statusCode).toEqual(404);
