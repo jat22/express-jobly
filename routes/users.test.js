@@ -310,6 +310,8 @@ describe("DELETE /users/:username", function () {
   });
 });
 
+/*************************************POST/users/:username/jobs/:id */
+
 describe("POST /users/:username/jobs/:id", function(){
   test("works for user", async () => {
     const idRes = await db.query(`SELECT id FROM jobs`);
@@ -355,5 +357,69 @@ describe("POST /users/:username/jobs/:id", function(){
         .set("authorization", `Bearer ${u1Token}`);
     expect(resp.statusCode).toEqual(500);
   });
+})
 
+/*************************************PATCH/users/:username/jobs/:id */
+
+describe("patch /users/:username/jobs/:id", function(){
+  test("works for user", async () => {
+    const idRes = await db.query(`SELECT id FROM jobs`);
+		const testId = idRes.rows[0].id;
+    await db.query(`
+      INSERT INTO applications
+        (username, job_id, current_status)
+      VALUES ('u1', ${testId}, 'interested')`);
+    const resp = await request(app)
+      .patch(`/users/u1/jobs/${testId}`)
+      .send({"currentStatus" : "applied"})
+      .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.body).toEqual({ applied : {jobId:testId, currentStatus:"applied", username:"u1"}})
+  });
+  test("works for admin", async () => {
+    const idRes = await db.query(`SELECT id FROM jobs`);
+		const testId = idRes.rows[0].id;
+    await db.query(`
+      INSERT INTO applications
+        (username, job_id, current_status)
+      VALUES ('u1', ${testId}, 'interested')`);
+    const resp = await request(app)
+      .patch(`/users/u1/jobs/${testId}`)
+      .send({"currentStatus" : "applied"})
+      .set("authorization", `Bearer ${u2Token}`);
+    expect(resp.body).toEqual({ applied : {jobId:testId, currentStatus:"applied", username:"u1"}})
+  });
+  test("unauth for anon", async () => {
+    const idRes = await db.query(`SELECT id FROM jobs`);
+		const testId = idRes.rows[0].id;
+    await db.query(`
+      INSERT INTO applications
+        (username, job_id, current_status)
+      VALUES ('u1', ${testId}, 'interested')`);
+    const resp = await request(app)
+      .patch(`/users/u1/jobs/${testId}`)
+      .send({"currentStatus" : "applied"})
+    expect(resp.statusCode).toBe(401)
+  });
+  test("error with missing data", async () => {
+    const idRes = await db.query(`SELECT id FROM jobs`);
+		const testId = idRes.rows[0].id;
+    await db.query(`
+      INSERT INTO applications
+        (username, job_id, current_status)
+      VALUES ('u1', ${testId}, 'interested')`);
+    const resp = await request(app)
+      .patch(`/users/u1/jobs/${testId}`)
+      .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toBe(400)
+  });
+  test("fails: test next() handler", async function () {
+    await db.query("DROP TABLE applications");
+    const idRes = await db.query(`SELECT id FROM jobs`);
+		const testId = idRes.rows[0].id;
+    const resp = await request(app)
+        .patch(`/users/u1/jobs/${testId}`)
+        .send({"currentStatus" : "applied"})
+        .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toEqual(500);
+  });
 })
