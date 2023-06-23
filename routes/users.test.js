@@ -195,7 +195,7 @@ describe("GET /users/:username", function () {
         firstName: "U1F",
         lastName: "U1L",
         email: "user1@user.com",
-        is_admin: false,
+        isAdmin: false,
         jobs : [null]
       },
     });
@@ -316,31 +316,42 @@ describe("POST /users/:username/jobs/:id", function(){
 		const testId = idRes.rows[0].id;
     const resp = await request(app)
       .post(`/users/u1/jobs/${testId}`)
+      .send({"currentStatus" : "applied"})
       .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.body).toEqual({ applied : testId })
+    expect(resp.body).toEqual({ applied : {jobId:testId, currentStatus:"applied"}})
   });
   test("works for admin", async () => {
     const idRes = await db.query(`SELECT id FROM jobs`);
 		const testId = idRes.rows[0].id;
     const resp = await request(app)
       .post(`/users/u1/jobs/${testId}`)
+      .send({"currentStatus" : "applied"})
       .set("authorization", `Bearer ${u2Token}`);
-    expect(resp.body).toEqual({ applied : testId })
+    expect(resp.body).toEqual({ applied : {jobId:testId, currentStatus:"applied"}})
   });
   test("unauth for anon", async () => {
     const idRes = await db.query(`SELECT id FROM jobs`);
 		const testId = idRes.rows[0].id;
     const resp = await request(app)
       .post(`/users/u1/jobs/${testId}`)
-      .set("authorization", `Bearer asdf`);
+      .send({"currentStatus" : "applied"})
     expect(resp.statusCode).toBe(401)
-  })
+  });
+  test("error with missing data", async () => {
+    const idRes = await db.query(`SELECT id FROM jobs`);
+		const testId = idRes.rows[0].id;
+    const resp = await request(app)
+      .post(`/users/u1/jobs/${testId}`)
+      .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toBe(400)
+  });
   test("fails: test next() handler", async function () {
     await db.query("DROP TABLE applications");
     const idRes = await db.query(`SELECT id FROM jobs`);
 		const testId = idRes.rows[0].id;
     const resp = await request(app)
         .post(`/users/u1/jobs/${testId}`)
+        .send({"currentStatus" : "applied"})
         .set("authorization", `Bearer ${u1Token}`);
     expect(resp.statusCode).toEqual(500);
   });

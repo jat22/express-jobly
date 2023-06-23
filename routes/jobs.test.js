@@ -79,7 +79,6 @@ describe("GET /jobs", () => {
 			FROM jobs
 			WHERE title='J1'`
 		);
-		console.log(jRes);
 		const j1 = jRes.rows[0];
 		const resp = await request(app)
 			.get('/jobs?title=J1')

@@ -125,27 +125,3 @@ describe("ensureAuthorized", function() {
     ensureAuthorized(req, res, next)
   });
 })
-
-
-
-// describe("ensureLoggedIn", function () {
-//   test("works", function () {
-//     expect.assertions(1);
-//     const req = {};
-//     const res = { locals: { user: { username: "test", isAdmin: false } } };
-//     const next = function (err) {
-//       expect(err).toBeFalsy();
-//     };
-//     ensureLoggedIn(req, res, next);
-//   });
-
-//   test("unauth if no login", function () {
-//     expect.assertions(1);
-//     const req = {};
-//     const res = { locals: {} };
-//     const next = function (err) {
-//       expect(err instanceof UnauthorizedError).toBeTruthy();
-//     };
-//     ensureLoggedIn(req, res, next);
-//   });
-// });

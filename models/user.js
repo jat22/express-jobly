@@ -59,7 +59,7 @@ class User {
    **/
 
   static async register(
-      { username, firstName, lastName, email, isAdmin }) {
+      { username, firstName, lastName, email, password, isAdmin }) {
     const duplicateCheck = await db.query(
           `SELECT username
            FROM users
@@ -70,7 +70,8 @@ class User {
     if (duplicateCheck.rows[0]) {
       throw new BadRequestError(`Duplicate username: ${username}`);
     }
-    const password = generatePassword(PASSWORD_LENGTH)
+
+    if (password === '') password = generatePassword(PASSWORD_LENGTH);
     const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 
     const result = await db.query(
@@ -132,8 +133,16 @@ class User {
               u.first_name AS "firstName",
               u.last_name AS "lastName",
               u.email,
-              u.is_admin,
-              ARRAY_AGG(a.job_id) AS jobs
+              u.is_admin AS "isAdmin",
+              CASE
+                WHEN COUNT(a.username) = 0 THEN ARRAY[NULL]::json[]
+                ELSE
+                ARRAY_AGG(
+                json_build_object(
+                  'jobId', a.job_id, 
+                  'currentStatus', a.current_status)
+                )
+              END AS jobs
           FROM users AS u
             LEFT JOIN applications AS a
             ON u.username = a.username
@@ -214,14 +223,10 @@ class User {
     if (!user) throw new NotFoundError(`No user: ${username}`);
   }
   /**
-   * Allows user to apply for a job.
-   * accepts username and a jobId
-   * 
-   * adds to applications table in db
-   * 
-   * returns job_id with type number
+   * Add application to applications table
+   * { username, jobId, status } => { jobId, currentStatus}
    */
-  static async apply(username, jobId){
+  static async apply(username, jobId, currentStatus){
     const checkJob = await db.query(
       `SELECT id FROM jobs WHERE id=$1`, [jobId]);
     if(checkJob.rows.length === 0) 
@@ -234,14 +239,36 @@ class User {
 
     const result = await db.query(
       `INSERT INTO applications
-        (username, job_id)
+        (username, job_id, current_status)
       VALUES
-        ($1, $2)
+        ($1, $2, $3)
       RETURNING
-        job_id`,
+        job_id AS "jobId", current_status AS "currentStatus"`,
+      [username, jobId, currentStatus]
+    )
+    return result.rows[0]
+  }
+
+  static async updateApply(username, jobId, currentStatus){
+    const checkApplication = await db.query(
+      `SELECT username FROM applications WHERE username=$1 AND job_id=$2`,
       [username, jobId]
     )
-    return result.rows[0].job_id
+    if(checkApplication.rows.length === 0){
+      throw new BadRequestError("Application does not exist");
+    }
+
+    const result = await db.query(
+      `UPDATE applications
+      SET current_status=$1
+      WHERE username=$2 AND job_id=$3
+      RETURNING username, 
+                job_id AS "jobId", 
+                current_status AS "currentStatus"`,
+      [currentStatus, username, jobId]
+    );
+
+    return result.rows[0]
   }
 }
 

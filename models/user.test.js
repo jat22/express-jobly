@@ -138,9 +138,9 @@ describe("get", function () {
 
     await db.query(`
           INSERT INTO applications
-            (username, job_id)
-          VALUES  ('u1', ${j1Id.rows[0].id}),
-                  ('u1', ${j2Id.rows[0].id})`);
+            (username, job_id, current_status)
+          VALUES  ('u1', ${j1Id.rows[0].id}, 'applied'),
+                  ('u1', ${j2Id.rows[0].id}, 'accepted')`);
 
     let user = await User.get("u1");
 
@@ -149,10 +149,10 @@ describe("get", function () {
       firstName: "U1F",
       lastName: "U1L",
       email: "u1@email.com",
-      is_admin: false,
+      isAdmin: false,
       jobs: [
-        j1Id.rows[0].id,
-        j2Id.rows[0].id
+        {jobId: j1Id.rows[0].id, currentStatus : "applied"},
+        {jobId: j2Id.rows[0].id, currentStatus : "accepted"}
       ]
     });
   });
@@ -165,7 +165,7 @@ describe("get", function () {
       firstName: "U2F",
       lastName: "U2L",
       email: "u2@email.com",
-      is_admin: false,
+      isAdmin: false,
       jobs: [
         null
       ]
@@ -258,14 +258,15 @@ describe("remove", function () {
   });
 });
 
+/************************************ apply */
 describe("apply", function(){
   test("works", async()=>{
     const jobRes = await db.query(
       `SELECT id FROM jobs WHERE title='J1'`
-    )
-    const jobId = jobRes.rows[0].id
-    const result = await User.apply("u1", jobId)
-    expect(result).toBe(jobId)
+    );
+    const jobId = jobRes.rows[0].id;
+    const result = await User.apply("u1", jobId, "applied");
+    expect(result).toEqual({ jobId : jobId, currentStatus : "applied"});
   });
   test("job does not exit", async()=>{
     try{
@@ -285,4 +286,24 @@ describe("apply", function(){
       expect(e instanceof BadRequestError).toBeTruthy
     }
   })
+})
+
+describe("update apply", function(){
+  test("works", async() => {
+    const jobRes = await db.query(
+      `SELECT id FROM jobs WHERE title='J1'`
+    );
+    const jobId = jobRes.rows[0].id;
+    const application = await User.apply("u1", jobId, "applied");
+
+    const result = await User.updateApply("u1", application.jobId, "accepted")
+    expect(result).toEqual({jobId : application.jobId, username: "u1", currentStatus : "accepted"});
+  });
+  test("application does not exist", async() => {
+    try{
+      const result = await User.updateApply("u1", 45, "accepted")
+    } catch(e){
+      expect(e instanceof BadRequestError).toBeTruthy
+    }
+  });
 })

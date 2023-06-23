@@ -11,6 +11,7 @@ const User = require("../models/user");
 const { createToken } = require("../helpers/tokens");
 const userNewSchema = require("../schemas/userNew.json");
 const userUpdateSchema = require("../schemas/userUpdate.json");
+const userApplySchema = require("../schemas/userApply.json")
 
 const router = express.Router();
 
@@ -35,7 +36,7 @@ router.post("/", ensureAdmin, async function (req, res, next) {
       throw new BadRequestError(errs);
     }
 
-    const user = await User.register(req.body);
+    const user = await User.register({...req.body, password:""});
     const token = createToken(user);
     return res.status(201).json({ user, token });
   } catch (err) {
@@ -119,14 +120,45 @@ router.delete("/:username", ensureAuthorized, async function (req, res, next) {
   }
 });
 
-/** POST /[username]/jobs/[id] => { applied: {username, jobId } 
+/** POST /[username]/jobs/[id] { currentStatus }=> 
+ *      { applied: {username, jobId, currentStatus } 
  * 
  * Authorization required: user or admin
 */
 router.post("/:username/jobs/:id", ensureAuthorized, async function(req, res, next) {
   try {
-    const result = await User.apply(req.params.username, req.params.id)
+    const validator = jsonschema.validate(req.body, userApplySchema);
+    if (!validator.valid) {
+      const errs = validator.errors.map(e => e.stack);
+      throw new BadRequestError(errs);
+    }
+    const result = await User.apply(
+                      req.params.username, 
+                      req.params.id, 
+                      req.body.currentStatus)
     return res.status(201).json({ applied : result })
+  } catch(e) {
+    return next(e)
+  }
+})
+
+/** PATCH /[username]/jobs/[id] { currentStatus }=> 
+ *      { applied: {username, jobId, currentStatus } 
+ * 
+ * Authorization required: user or admin
+*/
+router.patch("/:username/jobs/:id", ensureAuthorized, async function(req, res, next) {
+  try {
+    const validator = jsonschema.validate(req.body, userApplySchema);
+    if (!validator.valid) {
+      const errs = validator.errors.map(e => e.stack);
+      throw new BadRequestError(errs);
+    }
+    const result = await User.updateApply(
+                      req.params.username, 
+                      req.params.id, 
+                      req.body.currentStatus)
+    return res.status(200).json({ applied : result })
   } catch(e) {
     return next(e)
   }
