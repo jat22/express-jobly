@@ -192,10 +192,17 @@ describe("DELETE /jobs/:id", function(){
 	});
 
 	test("unauth for anon", async function () {
-	const idRes = await db.query(`SELECT id FROM jobs`)
-	const testId = idRes.rows[0].id
-	const resp = await request(app)
-		.delete(`/jobs/${testId}`)
-	expect(resp.statusCode).toBe(401);
+		const idRes = await db.query(`SELECT id FROM jobs`)
+		const testId = idRes.rows[0].id
+		const resp = await request(app)
+			.delete(`/jobs/${testId}`)
+		expect(resp.statusCode).toBe(401);
 	});
+
+	test("job does not exist", async() => {
+		const resp = await request(app)
+			.delete(`/jobs/100000`)
+			.set("authorization", `Bearer ${u2Token}`);
+		expect(resp.statusCode).toBe(404)
+	})
 })

@@ -106,8 +106,8 @@ describe("POST /users", function () {
         .send({
           username: "u-new",
         })
-        .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.statusCode).toEqual(401);
+        .set("authorization", `Bearer ${u2Token}`);
+    expect(resp.statusCode).toEqual(400);
   });
 
   test("bad request if invalid data", async function () {
@@ -121,8 +121,8 @@ describe("POST /users", function () {
           email: "not-an-email",
           isAdmin: true,
         })
-        .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.statusCode).toEqual(401);
+        .set("authorization", `Bearer ${u2Token}`);
+    expect(resp.statusCode).toEqual(400);
   });
 });
 
@@ -213,8 +213,8 @@ describe("GET /users/:username", function () {
   test("not found if user not found", async function () {
     const resp = await request(app)
         .get(`/users/nope`)
-        .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.statusCode).toEqual(401);
+        .set("authorization", `Bearer ${u2Token}`);
+    expect(resp.statusCode).toEqual(404);
   });
 });
 
@@ -308,7 +308,44 @@ describe("DELETE /users/:username", function () {
   test("not found if user missing", async function () {
     const resp = await request(app)
         .delete(`/users/nope`)
-        .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.statusCode).toEqual(401);
+        .set("authorization", `Bearer ${u2Token}`);
+    expect(resp.statusCode).toEqual(404);
   });
 });
+
+describe("POST /users/:username/jobs/:id", function(){
+  test("works for user", async () => {
+    const idRes = await db.query(`SELECT id FROM jobs`);
+		const testId = idRes.rows[0].id;
+    const resp = await request(app)
+      .post(`/users/u1/jobs/${testId}`)
+      .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.body).toEqual({ applied : testId })
+  });
+  test("works for admin", async () => {
+    const idRes = await db.query(`SELECT id FROM jobs`);
+		const testId = idRes.rows[0].id;
+    const resp = await request(app)
+      .post(`/users/u1/jobs/${testId}`)
+      .set("authorization", `Bearer ${u2Token}`);
+    expect(resp.body).toEqual({ applied : testId })
+  });
+  test("unauth for anon", async () => {
+    const idRes = await db.query(`SELECT id FROM jobs`);
+		const testId = idRes.rows[0].id;
+    const resp = await request(app)
+      .post(`/users/u1/jobs/${testId}`)
+      .set("authorization", `Bearer asdf`);
+    expect(resp.statusCode).toBe(401)
+  })
+  test("fails: test next() handler", async function () {
+    await db.query("DROP TABLE applications");
+    const idRes = await db.query(`SELECT id FROM jobs`);
+		const testId = idRes.rows[0].id;
+    const resp = await request(app)
+        .post(`/users/u1/jobs/${testId}`)
+        .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toEqual(500);
+  });
+
+})
