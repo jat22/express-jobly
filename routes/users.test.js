@@ -30,7 +30,6 @@ describe("POST /users", function () {
           username: "u-new",
           firstName: "First-new",
           lastName: "Last-newL",
-          password: "password-new",
           email: "new@email.com",
           isAdmin : false
         })
@@ -47,14 +46,13 @@ describe("POST /users", function () {
     });
   });
 
-  test("works for users: create admin", async function () {
+  test("works for admin: create admin", async function () {
     const resp = await request(app)
         .post("/users")
         .send({
           username: "u-new",
           firstName: "First-new",
           lastName: "Last-newL",
-          password: "password-new",
           email: "new@email.com",
           isAdmin: true,
         })
@@ -78,7 +76,6 @@ describe("POST /users", function () {
           username: "u-new",
           firstName: "First-new",
           lastName: "Last-newL",
-          password: "password-new",
           email: "new@email.com",
           isAdmin: true,
         });

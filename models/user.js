@@ -9,7 +9,9 @@ const {
   UnauthorizedError,
 } = require("../expressError");
 
-const { BCRYPT_WORK_FACTOR } = require("../config.js");
+const { generatePassword } = require("../helpers/password")
+
+const { BCRYPT_WORK_FACTOR, PASSWORD_LENGTH } = require("../config.js");
 
 /** Related functions for users. */
 
@@ -57,7 +59,7 @@ class User {
    **/
 
   static async register(
-      { username, password, firstName, lastName, email, isAdmin }) {
+      { username, firstName, lastName, email, isAdmin }) {
     const duplicateCheck = await db.query(
           `SELECT username
            FROM users
@@ -68,7 +70,7 @@ class User {
     if (duplicateCheck.rows[0]) {
       throw new BadRequestError(`Duplicate username: ${username}`);
     }
-
+    const password = generatePassword(PASSWORD_LENGTH)
     const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 
     const result = await db.query(
