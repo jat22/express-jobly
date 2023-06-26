@@ -122,6 +122,7 @@ router.delete("/:username", ensureAuthorized, async function (req, res, next) {
 
 /** POST /[username]/jobs/[id] { currentStatus }=> 
  *      { applied: {username, jobId, currentStatus } 
+ * currentStatus options ["interested", "applied", "accepted", "rejected"]
  * 
  * Authorization required: user or admin
 */
@@ -144,6 +145,8 @@ router.post("/:username/jobs/:id", ensureAuthorized, async function(req, res, ne
 
 /** PATCH /[username]/jobs/[id] { currentStatus }=> 
  *      { applied: {username, jobId, currentStatus } 
+ * 
+ * currentStatus options ["interested", "applied", "accepted", "rejected"]
  * 
  * Authorization required: user or admin
 */

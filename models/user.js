@@ -70,7 +70,8 @@ class User {
     if (duplicateCheck.rows[0]) {
       throw new BadRequestError(`Duplicate username: ${username}`);
     }
-
+    
+    // if admin is registering, password is generated randomly
     if (password === '') password = generatePassword(PASSWORD_LENGTH);
     const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 

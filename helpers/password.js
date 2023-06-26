@@ -1,4 +1,13 @@
 
+/**Generate a password
+ *  <desired password length> => <password>
+ * 
+ * Generate a password with randomly picked characters
+ * characters include uppercase and lowercase letters, numbers and special characters
+ * 
+ * 
+ */
+
 function generatePassword(len){
 	const alphaCharLower = "abcdefghijklmnopqrstuvwxyz";
 	const alphaCharUpper = "ABCDEFGHIJKLMNOPQRSTUVWYXZ";
